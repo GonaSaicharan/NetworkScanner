@@ -1,0 +1,23 @@
+# Core Flask and Networking
+flask==3.0.0
+flask-limiter==3.3.0
+python-dotenv==1.0.0
+werkzeug==3.1.3
+jinja2==3.1.6
+markupsafe==3.0.2
+click==8.1.8
+
+# Security & Scanning
+ipaddress==1.0.23  # Though stdlib in Python 3, explicit for compatibility
+
+# Data Processing
+numpy==1.24.3
+scikit-learn==1.3.0
+
+# Async Operations
+aiohttp==3.11.16  # For async HTTP if needed
+asgiref==3.8.1  # ASGI support
+
+# Production Server (Optional)
+gunicorn==20.1.0
+uvicorn==0.34.0  # ASGI server
