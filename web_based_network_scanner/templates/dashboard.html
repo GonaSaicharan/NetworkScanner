@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scan Results</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+             --critical: #d32f2f;  /* Bright red */
+    --high: #e65100;      /* Darker orange */
+    --medium: #F57C00;    /* Bright orange */
+    --low: #388e3c;       /* Green */
+            --saffron: #FF9933;
+            --bg: #f8f9fa;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: #333;
+        }
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #1a1a2e);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .risk-alert {
+            background: var(--saffron);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .risk-level {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .recommendations {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        .recommendations li {
+            padding: 0.5rem 0;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        .ports-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .ports-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+        }
+        .ports-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        .chart-container {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .critical { color: var(--critical); }
+        .high { color: var(--high); }
+        .medium { color: var(--medium); }
+        .low { color: var(--low); }
+        .welcome-message {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="header">
+            <h1>Security Scan Results</h1>
+            <a href="{{ url_for('home') }}" class="btn btn-primary">New Scan</a>
+        </header>
+
+        <main class="main-content">
+            {% if scan_data %}
+            <section class="risk-alert">
+                <div class="risk-level {{ scan_data.analysis.mitigation.risk_level.lower() }}">
+                    {{ scan_data.analysis.mitigation.risk_level }} RISK DETECTED
+                </div>
+                <ul class="recommendations">
+                    {% for recommendation in scan_data.analysis.mitigation.recommendations %}
+                    <li>{{ recommendation }}</li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>Open Ports</div>
+                    <div class="stat-value">
+                        {{ scan_data.results|selectattr('status', 'equalto', 'open')|list|length }}
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div>High Risk Ports</div>
+                    <div class="stat-value high">
+                        {{ scan_data.analysis.vulnerabilities|selectattr('risk', 'equalto', 'HIGH')|list|length }}
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div>Threat Score</div>
+                    <div class="stat-value {% if scan_data.analysis.threat_score > 70 %}critical{% elif scan_data.analysis.threat_score > 30 %}high{% else %}low{% endif %}">
+                        {{ scan_data.analysis.threat_score }}%
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Threat Distribution</h3>
+                <div id="threatChart"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Vulnerable Ports</h3>
+                <table class="ports-table">
+                    <thead>
+                        <tr>
+                            <th>Port</th>
+                            <th>Service</th>
+                            <th>Status</th>
+                            <th>Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in scan_data.results %}
+                        {% if result.status == 'open' %}
+                        <tr>
+                            <td>{{ result.port }}</td>
+                            <td>{{ result.service }}</td>
+                            <td>{{ result.status }}</td>
+                            <td class="{{ scan_data.analysis.vulnerabilities|selectattr('port', 'equalto', result.port)|map(attribute='risk')|first|lower }}">
+                                {{ scan_data.analysis.vulnerabilities|selectattr('port', 'equalto', result.port)|map(attribute='risk')|first }}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="welcome-message">
+                <h2>No Scan Data Available</h2>
+                <p>No active scan results found.</p>
+                <a href="{{ url_for('home') }}" class="btn btn-primary">Start New Scan</a>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+
+    {% if scan_data %}
+    <script>
+        // Auto-clear after 5 minutes (300000ms)
+        setTimeout(() => {
+            window.location.href = "{{ url_for('clear_scan') }}";
+        }, 300000);
+
+        // Threat Distribution Chart
+        Plotly.newPlot('threatChart', [{
+            values: [
+                {{ scan_data.analysis.vulnerabilities|selectattr('risk', 'equalto', 'HIGH')|list|length }},
+                {{ scan_data.results|selectattr('status', 'equalto', 'open')|list|length - scan_data.analysis.vulnerabilities|selectattr('risk', 'equalto', 'HIGH')|list|length }}
+            ],
+            labels: ['High Risk', 'Normal'],
+            type: 'pie',
+            marker: { colors: ['#f57c00', '#388e3c'] }
+        }]);
+    </script>
+    {% endif %}
+</body>
+</html>

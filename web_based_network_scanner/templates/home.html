@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network Scanner - Educational Use Only</title>
+    <style>
+        :root {
+            --primary: #4CAF50;
+            --bg: #f8f9fa;
+            --error: #d32f2f;
+            --warning: #ff9800;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg);
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin-top: 0;
+            color: #2c3e50;
+            text-align: center;
+        }
+        .legal-warning {
+            background-color: #fff3e0;
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+        .legal-warning h3 {
+            color: var(--warning);
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+            width: 100%;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .error {
+            color: var(--error);
+            margin-top: 0.5rem;
+        }
+        .info {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .disclaimer {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: center;
+            margin-top: 1.5rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+        .checkbox-container {
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+        }
+        .checkbox-container input {
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Network Security Scanner</h1>
+
+        <div class="legal-warning">
+            <h3>⚠️ Legal Warning</h3>
+            <p>Unauthorized network scanning is <strong>illegal</strong> in most countries. This tool is for <strong>educational purposes only</strong> on networks you own or have explicit permission to scan.</p>
+            <p>Scanning networks without permission may result in:</p>
+            <ul>
+                <li>Legal action under the Computer Fraud and Abuse Act (CFAA)</li>
+                <li>Permanent IP bans from your ISP</li>
+                <li>Criminal charges in some jurisdictions</li>
+            </ul>
+        </div>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form action="{{ url_for('scan') }}" method="post" id="scanForm">
+            <div class="form-group">
+                <label for="target">Target IP/Hostname:</label>
+                <input type="text" id="target" name="target" required placeholder="example.com or 192.168.1.1">
+            </div>
+
+            <div class="form-group">
+                <label for="ports">Ports (comma separated or range):</label>
+                <input type="text" id="ports" name="ports" placeholder="80,443 or 20-25">
+                <div class="info">Leave blank for default ports (21,22,80,443,3306,3389,5432,8080,8000,8888)</div>
+            </div>
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="legalConfirm" required>
+                <label for="legalConfirm">I confirm I have legal authorization to scan this target</label>
+            </div>
+
+            <button type="submit" class="btn">Start Scan</button>
+        </form>
+
+        <div class="disclaimer">
+            <p><strong>Disclaimer:</strong> This tool is provided for educational purposes only. The developer assumes no responsibility for unauthorized or illegal use of this software. Users are solely responsible for ensuring their scanning activities comply with all applicable laws.</p>
+            <p>Recommended test targets: <code>scanme.nmap.org</code> or your own local network devices.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('scanForm').addEventListener('submit', function(e) {
+            const target = document.getElementById('target').value;
+            if (target.includes('.gov') || target.includes('.mil') ||
+                (target.match(/\d+\.\d+\.\d+\.\d+/) && !target.startsWith('192.168.'))) {
+                if (!confirm('WARNING: Scanning this target may be illegal. Are you certain you have authorization?')) {
+                    e.preventDefault();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
