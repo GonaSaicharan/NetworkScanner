@@ -1,4 +1,3 @@
-## README.md
 # Network Security Scanner (Educational Use Only)
 
 A Python-based network scanner built with Flask that identifies open ports, vulnerabilities, and provides security recommendations.
