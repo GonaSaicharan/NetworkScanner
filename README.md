@@ -58,4 +58,3 @@ DEBUG=True
 - Risk scoring
 - Mitigation recommendations
 - Interactive dashboard
-```
